@@ -14,7 +14,7 @@ public class ImagenesSinHilos {
     public static void main(String[] args) {
         try {
             // Cargar la imagen desde un archivo
-            File archivoEntrada = new File("C:\\Users\\camilo\\4to5toSemestre2024\\Paralela\\Paralela-2192\\Grupo2_NRC2192_Laboratorio1\\imagenes\\monoali.jpg"); // Cambia "imagen.png" por la ruta de tu imagen
+            File archivoEntrada = new File("C:\\Users\\User\\Desktop\\4to\\Paralela\\Parcial1\\Paralela-2192\\Grupo2_NRC2192_Laboratorio1\\imagenes\\mujercasada.jpg"); // Cambia "imagen.png" por la ruta de tu imagen
             BufferedImage imagen = ImageIO.read(archivoEntrada);
             
             if (imagen == null) {
