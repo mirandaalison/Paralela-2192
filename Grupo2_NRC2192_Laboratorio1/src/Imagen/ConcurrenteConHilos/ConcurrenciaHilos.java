@@ -1,105 +1,144 @@
-package Imagen.ConcurrenteConHilos;
+package imagen.concurrenteconHilos;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
 
+/**
+ * Procesador de imágenes a escala de grises con multithreading.
+ */
 public class ConcurrenciaHilos {
 
     public static void main(String[] args) {
-        try {
-            // Directorio de entrada
-            File carpetaEntrada = new File("C:\\ruta\\a\\tu\\carpeta\\imagenes");
+        String rutaCarpetaEntrada = "C:\\Users\\rquis_9zzy7zj\\OneDrive - UNIVERSIDAD DE LAS FUERZAS ARMADAS ESPE\\Escritorio\\Proyecto Paralela\\Grupo2_NRC2192_Laboratorio1\\imagenes";
+        String rutaCarpetaSalida = "C:\\Users\\rquis_9zzy7zj\\OneDrive - UNIVERSIDAD DE LAS FUERZAS ARMADAS ESPE\\Escritorio\\Proyecto Paralela\\Grupo2_NRC2192_Laboratorio1\\Imagenes_grises_porhilo";
 
-            // Directorio de salida
-            File carpetaSalida = new File("C:\\ruta\\a\\tu\\carpeta\\Imagenes_grises_porhilo");
+        File carpetaEntrada = new File(rutaCarpetaEntrada);
+        File carpetaSalida = new File(rutaCarpetaSalida);
 
-            if (!carpetaEntrada.exists() || !carpetaEntrada.isDirectory()) {
-                System.out.println("La carpeta de entrada especificada no existe o no es un directorio.");
-                return;
+        if (!carpetaSalida.exists()) {
+            carpetaSalida.mkdirs();
+        }
+
+        if (!carpetaEntrada.exists() || !carpetaEntrada.isDirectory()) {
+            System.out.println("La carpeta de entrada no existe o no es un directorio: " + carpetaEntrada.getAbsolutePath());
+            return;
+        }
+
+        File[] archivos = carpetaEntrada.listFiles((dir, name) -> name.toLowerCase().endsWith(".jpg"));
+
+        if (archivos == null || archivos.length == 0) {
+            System.out.println("No se encontraron imágenes .jpg en la carpeta de entrada.");
+            return;
+        }
+
+        int numeroHilos = Runtime.getRuntime().availableProcessors();
+        ExecutorService executor = Executors.newFixedThreadPool(numeroHilos);
+
+        // Dividir las imágenes entre los hilos
+        int tamanioBloque = (int) Math.ceil((double) archivos.length / numeroHilos);
+        List<Runnable> tareas = new ArrayList<>();
+
+        for (int i = 0; i < archivos.length; i += tamanioBloque) {
+            int fin = Math.min(i + tamanioBloque, archivos.length);
+            File[] bloqueArchivos = new File[fin - i];
+            System.arraycopy(archivos, i, bloqueArchivos, 0, fin - i);
+
+            // Debug: Imprimir archivos asignados al bloque
+            System.out.println("Bloque asignado a un hilo:");
+            for (File archivo : bloqueArchivos) {
+                System.out.println(" - " + archivo.getName());
             }
 
-            // Crear la carpeta de salida si no existe
-            if (!carpetaSalida.exists()) {
-                if (carpetaSalida.mkdirs()) {
-                    System.out.println("Carpeta de salida creada en: " + carpetaSalida.getAbsolutePath());
-                } else {
-                    System.out.println("No se pudo crear la carpeta de salida.");
-                    return;
+            tareas.add(new ProcesadorBloque(bloqueArchivos, carpetaSalida));
+        }
+
+        // Ejecutar todas las tareas
+        for (Runnable tarea : tareas) {
+            executor.execute(tarea);
+        }
+
+        // Esperar a que todos los hilos terminen
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
+                System.out.println("Tiempo de espera agotado. Finalizando forzadamente...");
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            System.out.println("Interrupción durante la espera de finalización.");
+            executor.shutdownNow();
+        }
+
+        System.out.println("Procesamiento completado.");
+    }
+
+    /**
+     * Clase que procesa un bloque de imágenes.
+     */
+    static class ProcesadorBloque implements Runnable {
+        private final File[] archivos;
+        private final File carpetaSalida;
+
+        public ProcesadorBloque(File[] archivos, File carpetaSalida) {
+            this.archivos = archivos;
+            this.carpetaSalida = carpetaSalida;
+        }
+
+        @Override
+        public void run() {
+            try {
+                for (File archivoEntrada : archivos) {
+                    System.out.println(Thread.currentThread().getName() + " procesando: " + archivoEntrada.getAbsolutePath());
+
+                    BufferedImage imagen = ImageIO.read(archivoEntrada);
+                    if (imagen == null) {
+                        System.out.println("No se pudo cargar la imagen: " + archivoEntrada.getName());
+                        continue;
+                    }
+
+                    BufferedImage imagenGris = convertirEscalaDeGrises(imagen);
+
+                    File archivoSalida = new File(carpetaSalida, archivoEntrada.getName());
+                    ImageIO.write(imagenGris, "jpg", archivoSalida);
+
+                    System.out.println("Imagen convertida y guardada en: " + archivoSalida.getAbsolutePath());
+                }
+            } catch (Exception e) {
+                System.out.println("Error en el procesamiento del bloque: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        private BufferedImage convertirEscalaDeGrises(BufferedImage imagen) {
+            int ancho = imagen.getWidth();
+            int alto = imagen.getHeight();
+
+            BufferedImage imagenGris = new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_RGB);
+
+            for (int y = 0; y < alto; y++) {
+                for (int x = 0; x < ancho; x++) {
+                    int pixel = imagen.getRGB(x, y);
+
+                    int alpha = (pixel >> 24) & 0xff;
+                    int red = (pixel >> 16) & 0xff;
+                    int green = (pixel >> 8) & 0xff;
+                    int blue = pixel & 0xff;
+
+                    int gris = (red + green + blue) / 3;
+                    int nuevoPixel = (alpha << 24) | (gris << 16) | (gris << 8) | gris;
+
+                    imagenGris.setRGB(x, y, nuevoPixel);
                 }
             }
 
-            File[] archivos = carpetaEntrada.listFiles((dir, name) -> 
-                name.toLowerCase().endsWith(".jpg") || name.toLowerCase().endsWith(".png"));
-
-            if (archivos == null || archivos.length == 0) {
-                System.out.println("No se encontraron imágenes en la carpeta de entrada.");
-                return;
-            }
-
-            System.out.println("Procesando " + archivos.length + " imágenes...");
-
-            // Crear un hilo por cada imagen
-            Thread[] hilos = new Thread[archivos.length];
-
-            for (int i = 0; i < archivos.length; i++) {
-                File archivo = archivos[i];
-
-                hilos[i] = new Thread(() -> {
-                    try {
-                        System.out.println("Procesando imagen: " + archivo.getName());
-
-                        BufferedImage imagen = ImageIO.read(archivo);
-
-                        if (imagen == null) {
-                            System.out.println("No se pudo leer la imagen: " + archivo.getName());
-                            return;
-                        }
-
-                        int altura = imagen.getHeight();
-                        int ancho = imagen.getWidth();
-
-                        System.out.println("Dimensiones: " + ancho + "x" + altura);
-
-                        // Convertir la imagen a escala de grises
-                        for (int y = 0; y < altura; y++) {
-                            for (int x = 0; x < ancho; x++) {
-                                int rgb = imagen.getRGB(x, y);
-
-                                int rojo = (rgb >> 16) & 0xFF;
-                                int verde = (rgb >> 8) & 0xFF;
-                                int azul = rgb & 0xFF;
-
-                                int gris = (rojo + verde + azul) / 3;
-
-                                int nuevoRGB = (gris << 16) | (gris << 8) | gris;
-                                imagen.setRGB(x, y, nuevoRGB);
-                            }
-                        }
-
-                        // Guardar la nueva imagen en la carpeta de salida
-                        File archivoSalida = new File(carpetaSalida, "gris_" + archivo.getName());
-                        ImageIO.write(imagen, "png", archivoSalida);
-
-                        System.out.println("Imagen guardada como: " + archivoSalida.getName());
-                    } catch (Exception e) {
-                        System.out.println("Error procesando la imagen: " + archivo.getName());
-                        e.printStackTrace();
-                    }
-                });
-
-                hilos[i].start(); // Iniciar hilo
-            }
-
-            // Esperar a que todos los hilos terminen
-            for (Thread hilo : hilos) {
-                hilo.join();
-            }
-
-            System.out.println("Procesamiento completado para todas las imágenes.");
-        } catch (Exception e) {
-            System.out.println("Ocurrió un error durante la ejecución:");
-            e.printStackTrace();
+            return imagenGris;
         }
     }
 }

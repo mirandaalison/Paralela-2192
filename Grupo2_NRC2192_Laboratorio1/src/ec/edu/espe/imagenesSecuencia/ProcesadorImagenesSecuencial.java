@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package ec.edu.espe.imagenesSecuencia;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -14,8 +11,8 @@ import javax.imageio.ImageIO;
 public class ProcesadorImagenesSecuencial {
     public static void main(String[] args) {
         // Ruta de la carpeta de imágenes
-        String rutaCarpetaEntrada = "C:\\Users\\camilo\\4to5toSemestre2024\\Paralela\\Paralela-2192\\Grupo2_NRC2192_Laboratorio1\\imagenes";
-        String rutaCarpetaSalida = "C:\\Users\\camilo\\4to5toSemestre2024\\Paralela\\Paralela-2192\\Grupo2_NRC2192_Laboratorio1\\imagenes_grises_secuencial";
+        String rutaCarpetaEntrada = "C:\\Users\\rquis_9zzy7zj\\OneDrive - UNIVERSIDAD DE LAS FUERZAS ARMADAS ESPE\\Escritorio\\Proyecto Paralela\\Grupo2_NRC2192_Laboratorio1\\imagenes";
+        String rutaCarpetaSalida = "C:\\Users\\rquis_9zzy7zj\\OneDrive - UNIVERSIDAD DE LAS FUERZAS ARMADAS ESPE\\Escritorio\\Proyecto Paralela\\Grupo2_NRC2192_Laboratorio1\\imagenes_grises_secuencial";
 
         // Crear las carpetas de entrada y salida
         File carpetaEntrada = new File(rutaCarpetaEntrada);

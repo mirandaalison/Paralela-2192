@@ -14,7 +14,7 @@ public class ProcesadorImagen {
     public static void main(String[] args) {
         try {
             // Cargar la imagen
-            File archivo = new File("C:\\Users\\User\\Desktop\\4to\\Paralela\\Parcial1\\Paralela-2192\\Grupo2_NRC2192_Laboratorio1\\imagenes\\mujercasada.jpg");
+            File archivo = new File("C:\\Users\\rquis_9zzy7zj\\OneDrive - UNIVERSIDAD DE LAS FUERZAS ARMADAS ESPE\\Escritorio\\Proyecto Paralela\\Grupo2_NRC2192_Laboratorio1\\imagenes\\mujercasada.jpg");
             BufferedImage imagen = ImageIO.read(archivo);
 
             int altura = imagen.getHeight();
